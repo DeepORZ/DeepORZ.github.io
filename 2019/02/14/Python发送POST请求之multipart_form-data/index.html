@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"deeporz.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前言在 HTTP&#x2F;1.1 协议中，使用 POST 请求提交数据时常用的 Content-Type 有以下几种:  application&#x2F;x-www-form-urlencoded 原生 Form 默认的提交方式, 最常用的一种，支持GET&#x2F;POST等方法。主要把数据编码成键值对的方式, 并且把特殊字符转义成 utf-8 字符，如空格会被转义成 %20。 application">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 发送 POST 请求之 Multipart&#x2F;form-data">
+<meta property="og:url" content="http://deeporz.com/2019/02/14/Python%E5%8F%91%E9%80%81POST%E8%AF%B7%E6%B1%82%E4%B9%8Bmultipart_form-data/index.html">
+<meta property="og:site_name" content="DeepORZ&#39;s Blog">
+<meta property="og:description" content="前言在 HTTP&#x2F;1.1 协议中，使用 POST 请求提交数据时常用的 Content-Type 有以下几种:  application&#x2F;x-www-form-urlencoded 原生 Form 默认的提交方式, 最常用的一种，支持GET&#x2F;POST等方法。主要把数据编码成键值对的方式, 并且把特殊字符转义成 utf-8 字符，如空格会被转义成 %20。 application">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-02-14T02:00:00.000Z">
+<meta property="article:modified_time" content="2023-06-25T03:04:17.902Z">
+<meta property="article:author" content="DeepORZ">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="POST">
+<meta property="article:tag" content="Multipart&#x2F;form-data">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://deeporz.com/2019/02/14/Python%E5%8F%91%E9%80%81POST%E8%AF%B7%E6%B1%82%E4%B9%8Bmultipart_form-data/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Python 发送 POST 请求之 Multipart/form-data | DeepORZ's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">DeepORZ's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container"></div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="algolia-results">
+  <div id="algolia-stats"></div>
+  <div id="algolia-hits"></div>
+  <div id="algolia-pagination" class="algolia-pagination"></div>
+</div>
+
+      
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://deeporz.com/2019/02/14/Python%E5%8F%91%E9%80%81POST%E8%AF%B7%E6%B1%82%E4%B9%8Bmultipart_form-data/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/uploads/avatar.jpg">
+      <meta itemprop="name" content="DeepORZ">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="DeepORZ's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Python 发送 POST 请求之 Multipart/form-data
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-02-14 10:00:00" itemprop="dateCreated datePublished" datetime="2019-02-14T10:00:00+08:00">2019-02-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-06-25 11:04:17" itemprop="dateModified" datetime="2023-06-25T11:04:17+08:00">2023-06-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在 HTTP&#x2F;1.1 协议中，使用 POST 请求提交数据时常用的 Content-Type 有以下几种:</p>
+<ul>
+<li><code>application/x-www-form-urlencoded</code> 原生 Form 默认的提交方式, 最常用的一种，支持GET&#x2F;POST等方法。主要把数据编码成键值对的方式, 并且把特殊字符转义成 utf-8 字符，如空格会被转义成 %20。</li>
+<li><code>application/json</code> 由于 JSON 格式所表示的结构化数据远比键值对复杂得多，所以使用 JSON 系列化之后的字符串进行数据交换的方式越来越受人们青睐。特别适合 RESTful 类型的接口。</li>
+<li><code>text/xml</code> 使用 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/XML-RPC">XML-RPC(XML Remote Procedure Call)</a> 协议进行数据传输，相比于 JSON 的方式更为臃肿。</li>
+<li><code>multipart/form-data</code> 使用 Form 提交小文件, 直接把文件内容放在 Body 中进行传输的方式。考虑到同时上传多个字段或文件，所以需要按照一定规则随机生成或手动指定一个 boundary 用于分割数据，然后按照一定格式、顺序进行排列构成完整的 Body 进行传输。(<a target="_blank" rel="noopener" href="https://www.ietf.org/rfc/rfc1867.txt">multipart&#x2F;form-data 官方定义</a>)</li>
+</ul>
+<h2 id="客户端发送-multipart-x2F-form-data-请求"><a href="#客户端发送-multipart-x2F-form-data-请求" class="headerlink" title="客户端发送 multipart&#x2F;form-data 请求"></a>客户端发送 multipart&#x2F;form-data 请求</h2><p>假设现在有 <code>./file_1.txt</code> 和 <code>./file_2.txt</code> 两个文件，内容分别如下:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># cat ./file_1.txt</span></span><br><span class="line"><span class="built_in">test</span> file 1 content!</span><br><span class="line"></span><br><span class="line"><span class="comment"># cat ./file_2.txt</span></span><br><span class="line"><span class="built_in">test</span> file 2 content!</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用-Requests-实现"><a href="#使用-Requests-实现" class="headerlink" title="使用 Requests 实现"></a>使用 <a target="_blank" rel="noopener" href="http://docs.python-requests.org/en/master/">Requests</a> 实现</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"></span><br><span class="line">data = &#123;<span class="string">&#x27;key_1&#x27;</span>: <span class="string">&#x27;value_1&#x27;</span>, <span class="string">&#x27;key_2&#x27;</span>: <span class="string">&#x27;value_2&#x27;</span>&#125;</span><br><span class="line"></span><br><span class="line">files = [</span><br><span class="line">    (<span class="string">&#x27;file_1&#x27;</span>, <span class="built_in">open</span>(<span class="string">&#x27;./file_1.txt&#x27;</span>, <span class="string">&#x27;rb&#x27;</span>)),</span><br><span class="line">    (<span class="string">&#x27;file_2&#x27;</span>, <span class="built_in">open</span>(<span class="string">&#x27;./file_2.txt&#x27;</span>, <span class="string">&#x27;rb&#x27;</span>)),</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">resp = requests.post(<span class="string">&#x27;http://127.0.0.1:8000/upload&#x27;</span>, data=data, files=files)</span><br><span class="line"><span class="built_in">print</span>(resp.request.body.decode(<span class="string">&#x27;utf-8&#x27;</span>))</span><br></pre></td></tr></table></figure>
+
+<p>打印出来的 request body 内容是这样的</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">--bfa60c05b6631915da313e8fb696e7b2</span><br><span class="line">Content-Disposition: form-data; name=<span class="string">&quot;key_1&quot;</span></span><br><span class="line"></span><br><span class="line">value_1</span><br><span class="line">--bfa60c05b6631915da313e8fb696e7b2</span><br><span class="line">Content-Disposition: form-data; name=<span class="string">&quot;key_2&quot;</span></span><br><span class="line"></span><br><span class="line">value_2</span><br><span class="line">--bfa60c05b6631915da313e8fb696e7b2</span><br><span class="line">Content-Disposition: form-data; name=<span class="string">&quot;file_1&quot;</span>; filename=<span class="string">&quot;file_1.txt&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">test</span> file 1 content!</span><br><span class="line"></span><br><span class="line">--bfa60c05b6631915da313e8fb696e7b2</span><br><span class="line">Content-Disposition: form-data; name=<span class="string">&quot;file_2&quot;</span>; filename=<span class="string">&quot;file_2.txt&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">test</span> file 2 content!</span><br><span class="line"></span><br><span class="line">--bfa60c05b6631915da313e8fb696e7b2--</span><br></pre></td></tr></table></figure>
+
+<p>其中 <code>bfa60c05b6631915da313e8fb696e7b2</code> 就是上面所提到自动生成的 boundary。</p>
+<p>值得注意的是 <code>&#123;&#39;key_1&#39;: &#39;value_1&#39;, &#39;key_2&#39;: &#39;value_2&#39;&#125;</code> 这两个本身是键值对的数据也被自动转成了 <code>multipart/form-data</code> 的编码方式。如果不传 <code>files</code> 字段时，将自动使用 <code>application/x-www-form-urlencoded</code> 的编码方式，所以 request body 内容应该是这样的</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">key_1=value_1&amp;key_2=value_2</span><br></pre></td></tr></table></figure>
+
+<p>在 requests 中数据编码时，只有 <code>data</code> 参数为 None 时才会判断使用 <code>json</code> 参数，所以 <code>data</code> 和 <code>json</code> 两个参数同时存在时，只会编码 <code>data</code> 的数据；但 <code>data</code> 和 <code>files</code> 是可以同时存在的，而且只要有 <code>files</code> 存在，其它键值对数据也会一起使用 <code>multipart/form-data</code> 的编码方式生成 body 数据。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># json 参数将会被忽略</span></span><br><span class="line">resp = requests.post(<span class="string">&#x27;http://127.0.0.1:8000/upload&#x27;</span>, data=data, json=xxxx)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 这样是 OK 的</span></span><br><span class="line">resp = requests.post(<span class="string">&#x27;http://127.0.0.1:8000/upload&#x27;</span>, data=data, files=files)</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用-AIOHTTP-实现"><a href="#使用-AIOHTTP-实现" class="headerlink" title="使用 AIOHTTP 实现"></a>使用 <a target="_blank" rel="noopener" href="https://aiohttp.readthedocs.io/en/stable/">AIOHTTP</a> 实现</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"><span class="keyword">import</span> aiohttp</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">send_request</span>():</span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">with</span> aiohttp.ClientSession() <span class="keyword">as</span> session:</span><br><span class="line">        data = aiohttp.FormData()</span><br><span class="line">        data.add_field(<span class="string">&#x27;key_1&#x27;</span>, <span class="string">&#x27;value_1&#x27;</span>)</span><br><span class="line">        data.add_field(<span class="string">&#x27;key_2&#x27;</span>, <span class="string">&#x27;value_2&#x27;</span>)</span><br><span class="line">        data.add_field(<span class="string">&#x27;file_1&#x27;</span>, <span class="built_in">open</span>(<span class="string">&#x27;./file_1.txt&#x27;</span>, <span class="string">&#x27;rb&#x27;</span>), filename=<span class="string">&#x27;file_1.txt&#x27;</span>,</span><br><span class="line">                       content_type=<span class="string">&#x27;multipart/form-data&#x27;</span>)</span><br><span class="line">        data.add_field(<span class="string">&#x27;file_2&#x27;</span>, <span class="built_in">open</span>(<span class="string">&#x27;./file_2.txt&#x27;</span>, <span class="string">&#x27;rb&#x27;</span>), filename=<span class="string">&#x27;file_2.txt&#x27;</span>,</span><br><span class="line">                       content_type=<span class="string">&#x27;multipart/form-data&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">async</span> <span class="keyword">with</span> session.post(<span class="string">&#x27;http://127.0.0.1:8000/upload&#x27;</span>, data=data) <span class="keyword">as</span> resp:</span><br><span class="line">            <span class="built_in">print</span>(<span class="keyword">await</span> resp.text())</span><br><span class="line"></span><br><span class="line">asyncio.run(send_request())</span><br></pre></td></tr></table></figure>
+
+<p>打印出来的 request body 如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">--a63b12cbef044b039c5c788b25a71336</span><br><span class="line">Content-Type: text/plain; charset=utf-8</span><br><span class="line">Content-Disposition: form-data; name=&quot;key_1&quot;</span><br><span class="line">Content-Length: 7</span><br><span class="line"></span><br><span class="line">value_1</span><br><span class="line">--a63b12cbef044b039c5c788b25a71336</span><br><span class="line">Content-Type: text/plain; charset=utf-8</span><br><span class="line">Content-Disposition: form-data; name=&quot;key_2&quot;</span><br><span class="line">Content-Length: 7</span><br><span class="line"></span><br><span class="line">value_2</span><br><span class="line">--a63b12cbef044b039c5c788b25a71336</span><br><span class="line">Content-Type: multipart/form-data</span><br><span class="line">Content-Disposition: form-data; name=&quot;file_1&quot;; filename=&quot;file_1.txt&quot;; filename*=utf-8&#x27;&#x27;file_1.txt</span><br><span class="line">Content-Length: 21</span><br><span class="line"></span><br><span class="line">test file 1 content!</span><br><span class="line"></span><br><span class="line">--a63b12cbef044b039c5c788b25a71336</span><br><span class="line">Content-Type: multipart/form-data</span><br><span class="line">Content-Disposition: form-data; name=&quot;file_2&quot;; filename=&quot;file_2.txt&quot;; filename*=utf-8&#x27;&#x27;file_2.txt</span><br><span class="line">Content-Length: 21</span><br><span class="line"></span><br><span class="line">test file 2 content!</span><br><span class="line"></span><br><span class="line">--a63b12cbef044b039c5c788b25a71336--</span><br></pre></td></tr></table></figure>
+
+<p>可以看到 aiohttp 对键值对默认使用了 <code>Content-Type: text/plain</code>, 即纯文本的方式，这只是不同库的默认值和实现方式有些区别而已。</p>
+<h2 id="服务端解析-multipart-x2F-form-data-请求"><a href="#服务端解析-multipart-x2F-form-data-请求" class="headerlink" title="服务端解析 multipart&#x2F;form-data 请求"></a>服务端解析 multipart&#x2F;form-data 请求</h2><p>这里服务端使用 <code>Sanic</code> 框架接收数据请求，<code>Sanic</code> 是 <code>python3</code> 中性能非常好异步无阻塞的 web 框架，特别是跟 <code>uvloop</code> 配合着使用，性能上可以发挥到极致。用法跟<code>Flask</code>非常类似。项目主页: <a target="_blank" rel="noopener" href="https://github.com/huge-success/sanic">https://github.com/huge-success/sanic</a>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sanic <span class="keyword">import</span> Sanic, response</span><br><span class="line"></span><br><span class="line">app = Sanic(__name__)</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.post(<span class="params"><span class="string">&#x27;/upload&#x27;</span></span>)</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">upload_handler</span>(<span class="params">request</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;request.files&#x27;</span>, request.files)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;request.form&#x27;</span>, request.form)</span><br><span class="line">    <span class="keyword">return</span> response.text(<span class="string">&#x27;ok&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    app.run(host=<span class="string">&#x27;0.0.0.0&#x27;</span>, port=<span class="number">8000</span>)</span><br></pre></td></tr></table></figure>
+
+<p>输出信息如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">request.files &#123;&#x27;file_1&#x27;: [File(type=&#x27;multipart/form-data&#x27;, body=b&#x27;test file 1 content!\n&#x27;, name=&#x27;file_1.txt&#x27;)], &#x27;file_2&#x27;: [File(type=&#x27;multipart/form-data&#x27;, body=b&#x27;test file 2 content!\n&#x27;, name=&#x27;file_2.txt&#x27;)]&#125;</span><br><span class="line">request.form &#123;&#x27;key_1&#x27;: [&#x27;value_1&#x27;], &#x27;key_2&#x27;: [&#x27;value_2&#x27;]&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/POST/" rel="tag"># POST</a>
+              <a href="/tags/Multipart-form-data/" rel="tag"># Multipart/form-data</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2019/02/18/%E4%BD%BF%E7%94%A8SSH%E5%AE%9E%E7%8E%B0%E8%BF%9C%E7%A8%8B%E7%99%BB%E5%BD%95%E5%92%8C%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/" rel="next" title="使用 SSH 实现远程登录和内网穿透">
+      使用 SSH 实现远程登录和内网穿透 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%8F%91%E9%80%81-multipart-x2F-form-data-%E8%AF%B7%E6%B1%82"><span class="nav-number">2.</span> <span class="nav-text">客户端发送 multipart&#x2F;form-data 请求</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-Requests-%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.1.</span> <span class="nav-text">使用 Requests 实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-AIOHTTP-%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.2.</span> <span class="nav-text">使用 AIOHTTP 实现</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E8%A7%A3%E6%9E%90-multipart-x2F-form-data-%E8%AF%B7%E6%B1%82"><span class="nav-number">3.</span> <span class="nav-text">服务端解析 multipart&#x2F;form-data 请求</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="DeepORZ"
+      src="/uploads/avatar.jpg">
+  <p class="site-author-name" itemprop="name">DeepORZ</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/DeepORZ" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;DeepORZ" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:pwzergo@gmail.com" title="E-Mail → mailto:pwzergo@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备18128464号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">DeepORZ</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
+<script src="//cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script>
+<script src="/js/algolia-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '9fdbf87679e3106a1d6b',
+      clientSecret: '459fe9b37c90928fec9d096d9e6306b8109a1aba',
+      repo        : 'pwzer.github.io',
+      owner       : 'PWZER',
+      admin       : ['PWZER'],
+      id          : 'e0215797f7a9790511e333487c15508f',
+        language: '',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
